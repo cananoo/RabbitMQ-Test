@@ -36,7 +36,7 @@ public class Consumer01 {
         //过期时间 (建议设置在生产方)
         //arguments.put("x-message-ttl",10000);
         //设置正常队列长度限制
-        arguments.put("x-max-length",6);
+        //arguments.put("x-max-length",6);
         channel.queueDeclare(NORMAL_QUEUE,false,false,false,arguments);
         channel.queueDeclare(DEAD_QUEUE,false,false,false,null);
 
@@ -47,8 +47,18 @@ public class Consumer01 {
         System.out.println("等待接收消息....");
 
         DeliverCallback deliverCallback = (tag, message) -> {
-            System.out.println("C1控制台打印消息：" + new String(message.getBody(),"UTF-8"));
+            String msg = new String(message.getBody(), "UTF-8");
+            //模拟消息被拒
+             if( msg.equals("info5")) {
+                 // 参数2为是否放回队列
+                 channel.basicReject(message.getEnvelope().getDeliveryTag(),false);
+                 System.out.println("此消息被拒绝" + msg);
+             }else {
+                 // 参数2为是否批量应答
+                 channel.basicAck(message.getEnvelope().getDeliveryTag(),false);
+                 System.out.println("C1控制台打印消息：" + msg);
+             }
         };
-        channel.basicConsume(NORMAL_QUEUE,true,deliverCallback,consumerTag ->{});
+        channel.basicConsume(NORMAL_QUEUE,false,deliverCallback,consumerTag ->{});
     }
 }
